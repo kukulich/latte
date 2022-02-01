@@ -49,4 +49,12 @@ final class FragmentNode extends AreaNode
 
 		return $res;
 	}
+
+
+	public function &getIterator(): \Generator
+	{
+		foreach ($this->children as &$item) {
+			yield $item;
+		}
+	}
 }

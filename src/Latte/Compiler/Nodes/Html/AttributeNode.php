@@ -35,4 +35,12 @@ class AttributeNode extends AreaNode
 		}
 		return $res;
 	}
+
+
+	public function &getIterator(): \Generator
+	{
+		if ($this->value) {
+			yield $this->value;
+		}
+	}
 }

@@ -7,7 +7,10 @@ namespace Latte\Compiler;
 use Latte\Strict;
 
 
-abstract class Node
+/**
+ * @implements \IteratorAggregate<Node>
+ */
+abstract class Node implements \IteratorAggregate
 {
 	use Strict;
 
@@ -16,4 +19,11 @@ abstract class Node
 
 
 	abstract public function print(PrintContext $context): string;
+
+
+	public function &getIterator(): \Generator
+	{
+		return;
+		yield;
+	}
 }
