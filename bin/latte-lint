@@ -103,6 +103,7 @@ function lintLatte(Latte\Engine $latte, string $file): bool
 
 	} catch (Latte\CompileException $e) {
 		$pos = $e->sourceLine ? ':' . $e->sourceLine : '';
+		$pos .= $e->sourceColumn ? ':' . $e->sourceColumn : '';
 		fwrite(STDERR, "[ERROR]      $file$pos    {$e->getMessage()}\n");
 		return false;
 
