@@ -131,7 +131,7 @@ class CoreMacros extends MacroSet
 			return $writer->write("ob_start(fn() => '') %node.line; try {");
 		}
 
-		if ($tag->prefix === $tag::PREFIX_TAG) {
+		if ($tag->prefix === $tag::PrefixTag) {
 			for ($id = 0, $tmp = $tag->htmlNode; $tmp = $tmp->parentNode; $id++);
 			$tag->htmlNode->data->id ??= $id;
 			return $writer->write(
@@ -238,7 +238,7 @@ class CoreMacros extends MacroSet
 	 */
 	public function macroIfContent(Tag $tag, PhpWriter $writer): void
 	{
-		if (!$tag->prefix || $tag->prefix !== Tag::PREFIX_NONE) {
+		if (!$tag->prefix || $tag->prefix !== Tag::PrefixNone) {
 			throw new CompileException("Unknown {$tag->getNotation()}, use n:{$tag->name} attribute.");
 		}
 		if ($tag->htmlNode->empty) {
@@ -587,7 +587,7 @@ class CoreMacros extends MacroSet
 
 		$tag->validate('condition');
 
-		if ($tag->parentNode->prefix === $tag::PREFIX_NONE) {
+		if ($tag->parentNode->prefix === $tag::PrefixNone) {
 			return $writer->write("if (%node.args) %node.line { echo \"</{$tag->parentNode->htmlNode->name}>\\n\"; $cmd; }");
 		}
 
@@ -624,7 +624,7 @@ class CoreMacros extends MacroSet
 	 */
 	public function macroTag(Tag $tag, PhpWriter $writer): void
 	{
-		if (!$tag->prefix || $tag->prefix !== Tag::PREFIX_NONE) {
+		if (!$tag->prefix || $tag->prefix !== Tag::PrefixNone) {
 			throw new CompileException("Unknown {$tag->getNotation()}, use n:{$tag->name} attribute.");
 
 		} elseif (preg_match('(style$|script$)iA', $tag->htmlNode->name)) {
@@ -649,12 +649,12 @@ class CoreMacros extends MacroSet
 		?>', $tag->htmlNode->data->id, $tag->htmlNode->name);
 
 		$tag->content = preg_replace(
-			'~^(\s*<)' . Latte\Compiler\TemplateLexer::RE_TAG_NAME . '~',
+			'~^(\s*<)' . Latte\Compiler\TemplateLexer::ReTagName . '~',
 			"\$1<?php echo \$ʟ_tag[{$tag->htmlNode->data->id}]; ?>\n",
 			$tag->content,
 		);
 		$tag->content = preg_replace(
-			'~</' . Latte\Compiler\TemplateLexer::RE_TAG_NAME . '(\s*>\s*)$~',
+			'~</' . Latte\Compiler\TemplateLexer::ReTagName . '(\s*>\s*)$~',
 			"</<?php echo \$ʟ_tag[{$tag->htmlNode->data->id}]; ?>\n\$1",
 			$tag->content,
 		);
