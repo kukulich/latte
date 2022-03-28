@@ -132,13 +132,13 @@ class CoreMacros extends MacroSet
 		}
 
 		if ($tag->prefix === $tag::PrefixTag) {
-			for ($id = 0, $tmp = $tag->htmlNode; $tmp = $tmp->parentNode; $id++);
-			$tag->htmlNode->data->id ??= $id;
+			for ($id = 0, $tmp = $tag->htmlElement; $tmp = $tmp->parentNode; $id++);
+			$tag->htmlElement->data->id ??= $id;
 			return $writer->write(
-				$tag->htmlNode->closing
+				$tag->htmlElement->closing
 					? 'if ($ʟ_if[%var]) %node.line {'
 					: 'if ($ʟ_if[%var] = (%node.args)) %node.line {',
-				$tag->htmlNode->data->id,
+				$tag->htmlElement->data->id,
 			);
 		}
 
@@ -189,7 +189,7 @@ class CoreMacros extends MacroSet
 
 		$tag->validate(false, ['if', 'ifset', 'foreach', 'ifchanged', 'try', 'first', 'last', 'sep']);
 
-		$parent = $tag->parentNode;
+		$parent = $tag->parent;
 		if (isset($parent->data->else)) {
 			throw new CompileException('Tag ' . $parent->getNotation() . ' may only contain one {else} clause.');
 		}
@@ -223,7 +223,7 @@ class CoreMacros extends MacroSet
 	public function macroElseIf(Tag $tag, PhpWriter $writer): string
 	{
 		$tag->validate(true, ['if', 'ifset']);
-		if (isset($tag->parentNode->data->else) || !empty($tag->parentNode->data->capture)) {
+		if (isset($tag->parent->data->else) || !empty($tag->parent->data->capture)) {
 			throw new CompileException('Tag ' . $tag->getNotation() . ' is unexpected here.');
 		}
 
@@ -238,11 +238,11 @@ class CoreMacros extends MacroSet
 	 */
 	public function macroIfContent(Tag $tag, PhpWriter $writer): void
 	{
-		if (!$tag->prefix || $tag->prefix !== Tag::PrefixNone) {
+		if (!$tag->isNAttribute() || $tag->prefix !== Tag::PrefixNone) {
 			throw new CompileException("Unknown {$tag->getNotation()}, use n:{$tag->name} attribute.");
 		}
-		if ($tag->htmlNode->empty) {
-			throw new CompileException("Unnecessary n:ifcontent on empty element <{$tag->htmlNode->name}>");
+		if ($tag->htmlElement->empty) {
+			throw new CompileException("Unnecessary n:ifcontent on empty element <{$tag->htmlElement->name}>");
 		}
 
 		$tag->validate(false);
@@ -354,7 +354,7 @@ class CoreMacros extends MacroSet
 				implode('', $tag->context),
 			);
 
-		} elseif ($tag->empty = ($tag->args !== '') && $tag->name === '_') {
+		} elseif ($tag->void = ($tag->args !== '') && $tag->name === '_') {
 			return $writer->write('echo %modify(($this->filters->translate)(%node.args)) %node.line;');
 
 		} elseif ($tag->name === '_') {
@@ -587,8 +587,8 @@ class CoreMacros extends MacroSet
 
 		$tag->validate('condition');
 
-		if ($tag->parentNode->prefix === $tag::PrefixNone) {
-			return $writer->write("if (%node.args) %node.line { echo \"</{$tag->parentNode->htmlNode->name}>\\n\"; $cmd; }");
+		if ($tag->parent->prefix === $tag::PrefixNone) {
+			return $writer->write("if (%node.args) %node.line { echo \"</{$tag->parent->htmlElement->name}>\\n\"; $cmd; }");
 		}
 
 		return $writer->write("if (%node.args) %node.line $cmd;");
@@ -600,7 +600,7 @@ class CoreMacros extends MacroSet
 	 */
 	public function macroClass(Tag $tag, PhpWriter $writer): string
 	{
-		if (isset($tag->htmlNode->attrs['class'])) {
+		if (isset($tag->htmlElement->attrs['class'])) {
 			throw new CompileException('It is not possible to combine class with n:class.');
 		}
 
@@ -624,10 +624,10 @@ class CoreMacros extends MacroSet
 	 */
 	public function macroTag(Tag $tag, PhpWriter $writer): void
 	{
-		if (!$tag->prefix || $tag->prefix !== Tag::PrefixNone) {
+		if (!$tag->isNAttribute() || $tag->prefix !== Tag::PrefixNone) {
 			throw new CompileException("Unknown {$tag->getNotation()}, use n:{$tag->name} attribute.");
 
-		} elseif (preg_match('(style$|script$)iA', $tag->htmlNode->name)) {
+		} elseif (preg_match('(style$|script$)iA', $tag->htmlElement->name)) {
 			throw new CompileException("Attribute {$tag->getNotation()} is not allowed in <script> or <style>");
 		}
 
@@ -640,22 +640,22 @@ class CoreMacros extends MacroSet
 	 */
 	public function macroTagEnd(Tag $tag, PhpWriter $writer): void
 	{
-		for ($id = 0, $tmp = $tag->htmlNode; $tmp = $tmp->parentNode; $id++);
-		$tag->htmlNode->data->id ??= $id;
+		for ($id = 0, $tmp = $tag->htmlElement; $tmp = $tmp->parentNode; $id++);
+		$tag->htmlElement->data->id ??= $id;
 
 		$tag->openingCode = $writer->write('<?php
 			$ʟ_tag[%0_var] = (%node.args) ?? %1_var;
 			Latte\Runtime\Filters::checkTagSwitch(%1_var, $ʟ_tag[%0_var]);
-		?>', $tag->htmlNode->data->id, $tag->htmlNode->name);
+		?>', $tag->htmlElement->data->id, $tag->htmlElement->name);
 
 		$tag->content = preg_replace(
 			'~^(\s*<)' . Latte\Compiler\TemplateLexer::ReTagName . '~',
-			"\$1<?php echo \$ʟ_tag[{$tag->htmlNode->data->id}]; ?>\n",
+			"\$1<?php echo \$ʟ_tag[{$tag->htmlElement->data->id}]; ?>\n",
 			$tag->content,
 		);
 		$tag->content = preg_replace(
 			'~</' . Latte\Compiler\TemplateLexer::ReTagName . '(\s*>\s*)$~',
-			"</<?php echo \$ʟ_tag[{$tag->htmlNode->data->id}]; ?>\n\$1",
+			"</<?php echo \$ʟ_tag[{$tag->htmlElement->data->id}]; ?>\n\$1",
 			$tag->content,
 		);
 	}
@@ -695,7 +695,7 @@ class CoreMacros extends MacroSet
 	public function macroCase(Tag $tag, PhpWriter $writer): string
 	{
 		$tag->validate(true, ['switch']);
-		if (isset($tag->parentNode->data->default)) {
+		if (isset($tag->parent->data->default)) {
 			throw new CompileException('Tag {default} must follow after {case} clause.');
 		}
 
@@ -710,13 +710,13 @@ class CoreMacros extends MacroSet
 	 */
 	public function macroVar(Tag $tag, PhpWriter $writer): string
 	{
-		if ($tag->name === 'default' && $tag->parentNode && $tag->parentNode->name === 'switch') {
+		if ($tag->name === 'default' && $tag->parent && $tag->parent->name === 'switch') {
 			$tag->validate(false, ['switch']);
-			if (isset($tag->parentNode->data->default)) {
+			if (isset($tag->parent->data->default)) {
 				throw new CompileException('Tag {switch} may only contain one {default} clause.');
 			}
 
-			$tag->parentNode->data->default = true;
+			$tag->parent->data->default = true;
 			return $writer->write('} else %node.line {');
 
 		} elseif ($tag->modifiers) {
@@ -805,7 +805,7 @@ class CoreMacros extends MacroSet
 		$tag->validate(true);
 		if (
 			!$this->getCompiler()->isInHead()
-			&& !($tag->htmlNode && strtolower($tag->htmlNode->name) === 'script' && str_contains($tag->args, 'html'))
+			&& !($tag->htmlElement && strtolower($tag->htmlElement->name) === 'script' && str_contains($tag->args, 'html'))
 		) {
 			throw new CompileException($tag->getNotation() . ' is allowed only in template header.');
 		}
@@ -827,7 +827,7 @@ class CoreMacros extends MacroSet
 
 		$compiler->setContentType($type);
 
-		if (strpos($tag->args, '/') && !$tag->htmlNode) {
+		if (strpos($tag->args, '/') && !$tag->htmlElement) {
 			return $writer->write(
 				'if (empty($this->global->coreCaptured) && in_array($this->getReferenceType(), ["extends", null], true)) { header(%var) %node.line; } ',
 				'Content-Type: ' . $tag->args,
