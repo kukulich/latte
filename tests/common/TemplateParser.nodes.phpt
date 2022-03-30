@@ -24,6 +24,10 @@ function parse($s)
 
 Assert::match(<<<'XX'
 	Latte\Compiler\Nodes\TemplateNode
+	   head: Latte\Compiler\Nodes\FragmentNode
+	   |  children: array (0)
+	   |  startLine: null
+	   |  endLine: null
 	   main: Latte\Compiler\Nodes\FragmentNode
 	   |  children: array (0)
 	   |  startLine: null
@@ -35,6 +39,10 @@ Assert::match(<<<'XX'
 
 Assert::match(<<<'XX'
 	Latte\Compiler\Nodes\TemplateNode
+	   head: Latte\Compiler\Nodes\FragmentNode
+	   |  children: array (0)
+	   |  startLine: null
+	   |  endLine: null
 	   main: Latte\Compiler\Nodes\FragmentNode
 	   |  children: array (1)
 	   |  |  0 => Latte\Compiler\Nodes\TextNode
@@ -52,6 +60,10 @@ Assert::match(<<<'XX'
 
 Assert::match(<<<'XX'
 	Latte\Compiler\Nodes\TemplateNode
+	   head: Latte\Compiler\Nodes\FragmentNode
+	   |  children: array (0)
+	   |  startLine: null
+	   |  endLine: null
 	   main: Latte\Compiler\Nodes\FragmentNode
 	   |  children: array (3)
 	   |  |  0 => Latte\Compiler\Nodes\TextNode
@@ -75,6 +87,10 @@ Assert::match(<<<'XX'
 
 Assert::match(<<<'XX'
 	Latte\Compiler\Nodes\TemplateNode
+	   head: Latte\Compiler\Nodes\FragmentNode
+	   |  children: array (0)
+	   |  startLine: null
+	   |  endLine: null
 	   main: Latte\Compiler\Nodes\FragmentNode
 	   |  children: array (2)
 	   |  |  0 => Latte\Compiler\Nodes\TextNode
@@ -94,6 +110,10 @@ Assert::match(<<<'XX'
 
 Assert::match(<<<'XX'
 	Latte\Compiler\Nodes\TemplateNode
+	   head: Latte\Compiler\Nodes\FragmentNode
+	   |  children: array (0)
+	   |  startLine: null
+	   |  endLine: null
 	   main: Latte\Compiler\Nodes\FragmentNode
 	   |  children: array (1)
 	   |  |  0 => Latte\Compiler\Nodes\Html\ElementNode
@@ -139,6 +159,10 @@ Assert::match(<<<'XX'
 
 Assert::match(<<<'XX'
 	Latte\Compiler\Nodes\TemplateNode
+	   head: Latte\Compiler\Nodes\FragmentNode
+	   |  children: array (0)
+	   |  startLine: null
+	   |  endLine: null
 	   main: Latte\Compiler\Nodes\FragmentNode
 	   |  children: array (1)
 	   |  |  0 => Latte\Compiler\Nodes\Html\ElementNode
