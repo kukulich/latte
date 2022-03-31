@@ -306,14 +306,17 @@ final class TemplateParserHtml
 			} else {
 				$valueToken = $stream->consume(Token::Html_Name);
 			}
+			$tokens = $valueToken
+				? (new TagLexer)->tokenize($valueToken->text, $valueToken->line, $valueToken->column)
+				: [];
 		} else {
-			$valueToken = null;
+			$tokens = [];
 			$stream->seek($save);
 		}
 
 		$this->element->nAttributes[$name] = new Tag(
 			name: preg_replace('~(inner-|tag-|)~', '', $name),
-			args: $valueToken?->text ?? '',
+			tokens: $tokens,
 			startLine: $nameToken->line,
 			prefix: match (true) {
 				str_starts_with($name, 'inner-') => Tag::PrefixInner,

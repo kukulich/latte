@@ -39,6 +39,7 @@ final class TemplateLexer
 
 	/** @var string[] */
 	private array $delimiters;
+	private TagLexer $tagLexer;
 	private string $input;
 	private int $offset;
 	private int $line;
@@ -56,6 +57,7 @@ final class TemplateLexer
 		$this->states = [];
 		$this->setContentType($contentType);
 		$this->setSyntax(null);
+		$this->tagLexer = new TagLexer;
 
 		do {
 			$state = $this->states[0];
@@ -63,7 +65,7 @@ final class TemplateLexer
 		} while ($this->states[0]['name'] !== self::StateEnd);
 
 		if ($this->offset < strlen($this->input)) {
-			throw new CompileException("Unexpected '" . substr($this->input, $this->offset, 10) . "'", $this->line, $this->column);
+			throw new CompileException('Unexpected ' . substr($this->input, $this->offset, 10), $this->line, $this->column);
 		}
 	}
 
@@ -96,15 +98,30 @@ final class TemplateLexer
 		$m = yield from $this->match('~
 			(?<Slash>/)?
 			(?<Latte_Name>=|_(?!_)|[a-z]\w*+(?:-\w+)*+(?![:(\\\\]))?   # name, /name, but not function( or class:: or namespace\
-			(?<Latte_Args>(?>
-				' . self::ReString . '|
-				\{(?>' . self::ReString . '|[^\'"{}])*+\}|
-				[^\'"{}]+?
-			)+?)?
-			(?<Slash_>/)?
+		~xsiAu');
+
+		if (!$m) {
+			throw new CompileException('Malformed tag contents.', $this->line);
+		}
+
+		$m = yield from $this->match('~
+			(?<Slash>/)?
 			(?<Latte_TagClose>' . $this->delimiters[1] . ')
 			(?<Newline>[ \t]*\n)?
 		~xsiAu');
+
+		if (!$m) {
+			$tokens = $this->tagLexer->tokenize($this->input, $this->line, $this->column, $this->offset, toEnd: false);
+			if ($tokens && end($tokens)->is('/')) {
+				end($tokens)->type = Token::Slash;
+			}
+			yield from $tokens;
+
+			$m = yield from $this->match('~
+				(?<Latte_TagClose>' . $this->delimiters[1] . ')
+				(?<Newline>[ \t]*\n)?
+			~xsiAu');
+		}
 
 		if (!$m) {
 			throw new CompileException('Malformed tag contents.', $this->line);
@@ -317,7 +334,6 @@ final class TemplateLexer
 
 		foreach ($matches as $k => $v) {
 			if ($v !== null && !\is_int($k)) {
-				$k = rtrim($k, '_');
 				yield new Token(\constant(Token::class . '::' . $k), $v, $this->line, $this->column);
 
 				if ($lines = substr_count($v, "\n")) {

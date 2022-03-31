@@ -18,6 +18,12 @@ abstract class Node implements \IteratorAggregate
 	public ?int $endLine = null;
 
 
+	public function __construct(?int $startLine = null)
+	{
+		$this->startLine = $startLine;
+	}
+
+
 	abstract public function print(PrintContext $context): string;
 
 

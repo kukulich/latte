@@ -29,16 +29,16 @@ Assert::same([
 ], tokenize('<x:-._>'));
 
 Assert::same([
-	[Token::Text, '   ', '1:1'],
-	[Token::Html_BogusOpen, '<?', '1:4'],
-	[Token::Text, 'xml encoding="', '1:6'],
-	[Token::Latte_TagOpen, '{', '1:20'],
-	[Token::Latte_Args, '$enc', '1:21'],
-	[Token::Latte_TagClose, '}', '1:25'],
-	[Token::Text, '" ?', '1:26'],
-	[Token::Html_TagClose, '>', '1:29'],
-	[Token::Text, 'text', '1:30'],
-], tokenize('   <?xml encoding="{$enc}" ?>text'));
+	[Token::Text, '  ', '1:1'],
+	[Token::Html_BogusOpen, '<?', '1:3'],
+	[Token::Text, 'xml encoding="', '1:5'],
+	[Token::Latte_TagOpen, '{', '1:19'],
+	[Token::Php_Variable, '$enc', '1:20'],
+	[Token::Latte_TagClose, '}', '1:24'],
+	[Token::Text, '" ?', '1:25'],
+	[Token::Html_TagClose, '>', '1:28'],
+	[Token::Text, 'text', '1:29'],
+], tokenize('  <?xml encoding="{$enc}" ?>text'));
 
 Assert::same([
 	[Token::Text, 'x ', '1:1'],
@@ -193,7 +193,8 @@ Assert::same([
 	[Token::Indentation, ' ', '1:1'],
 	[Token::Latte_TagOpen, '{', '1:2'],
 	[Token::Latte_Name, 'foo', '1:3'],
-	[Token::Latte_Args, ' bar', '1:6'],
+	[Token::Php_Whitespace, ' ', '1:6'],
+	[Token::Php_Identifier, 'bar', '1:7'],
 	[Token::Latte_TagClose, '}', '1:10'],
 	[Token::Text, ' ... ', '1:11'],
 	[Token::Latte_TagOpen, '{', '1:16'],

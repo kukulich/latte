@@ -273,12 +273,23 @@ final class TemplateParser
 			startLine: $openToken->line,
 			closing: $closing = (bool) $stream->tryConsume(Token::Slash),
 			name: $stream->tryConsume(Token::Latte_Name)?->text ?? ($closing ? '' : '='),
-			args: trim($stream->tryConsume(Token::Latte_Args)?->text ?? ''),
+			tokens: $this->consumeTag(),
 			void: (bool) $stream->tryConsume(Token::Slash),
 			location: $this->location,
 			htmlElement: $this->html->getElement(),
 			endLine: $stream->consume(Token::Latte_TagClose)->line,
 		);
+	}
+
+
+	private function consumeTag(): array
+	{
+		$res = [];
+		while ($this->stream->peek(0)?->isPhpKind()) {
+			$res[] = $this->stream->consume();
+		}
+
+		return $res;
 	}
 
 
