@@ -38,10 +38,14 @@ testWord('word - 1', 'word', '- 1');
 testWord('word -1', 'word', '-1');
 testWord('word -$num', 'word', '-$num');
 
-Assert::error(function () {
-	testWord('a-$x', 'a-$x', '');
-}, E_USER_DEPRECATED, "The expression 'a-\$x' should be put in double quotes.");
+Assert::error(
+	fn() => testWord('a-$x', 'a-$x', ''),
+	E_USER_DEPRECATED,
+	"The expression 'a-\$x' should be put in double quotes.",
+);
 
-Assert::error(function () {
-	testWord('a-{$x}', 'a-{$x}', '');
-}, E_USER_DEPRECATED, "The expression 'a-{\$x}' should be put in double quotes.");
+Assert::error(
+	fn() => testWord('a-{$x}', 'a-{$x}', ''),
+	E_USER_DEPRECATED,
+	"The expression 'a-{\$x}' should be put in double quotes.",
+);
