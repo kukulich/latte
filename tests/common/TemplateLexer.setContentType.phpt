@@ -41,46 +41,27 @@ Assert::same([
 	['htmlTagEnd', '>'],
 	['text', ' '],
 	['htmlTagBegin', '<div'],
-	['htmlTagEnd', ' />'],
+	['text', ' '],
+	['htmlTagEnd', '/>'],
 	['text', ' '],
 	['htmlTagBegin', '</script'],
 	['htmlTagEnd', '>'],
 ], tokenize('<script> <div /> </script>', Context::Xml));
 
 Assert::same([
-	['macroTag', '{contentType xml}'],
-	['htmlTagBegin', '<script'],
-	['htmlTagEnd', '>'],
-	['text', ' '],
-	['htmlTagBegin', '<div'],
-	['htmlTagEnd', ' />'],
-	['text', ' '],
-	['htmlTagBegin', '</script'],
-	['htmlTagEnd', '>'],
-], tokenize('{contentType xml}<script> <div /> </script>'));
-
-Assert::same([
 	['text', '<script> <div /> </script>'],
 ], tokenize('<script> <div /> </script>', Context::Text));
-
-Assert::same([
-	['macroTag', '{contentType text}'],
-	['text', '<script> <div /> </script>'],
-], tokenize('{contentType text}<script> <div /> </script>'));
 
 Assert::same([
 	['text', '<script> <div /> </script>'],
 ], tokenize('<script> <div /> </script>', Context::ICal));
 
 Assert::same([
-	['macroTag', '{contentType ical}'],
-	['text', '<script> <div /> </script>'],
-], tokenize('{contentType ical}<script> <div /> </script>'));
-
-Assert::same([
 	['htmlTagBegin', '<script'],
-	['htmlTagEnd', ' />'],
+	['text', ' '],
+	['htmlTagEnd', '/>'],
 	['text', ' '],
 	['htmlTagBegin', '<div'],
-	['htmlTagEnd', ' />'],
+	['text', ' '],
+	['htmlTagEnd', '/>'],
 ], tokenize('<script /> <div />', Context::Html));
