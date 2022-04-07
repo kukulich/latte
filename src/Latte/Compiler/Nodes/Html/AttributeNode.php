@@ -18,19 +18,18 @@ class AttributeNode extends AreaNode
 {
 	public function __construct(
 		public string $name,
-		public string $text,
 		public ?Node $value = null,
-		public ?string $quote = null,
 		public ?int $startLine = null,
 	) {
-		$this->endLine = $startLine + substr_count($text, "\n");
+		$this->endLine = $startLine;
 	}
 
 
 	public function print(PrintContext $context): string
 	{
-		$res = 'echo ' . var_export($this->text, true) . ';';
+		$res = 'echo ' . var_export($this->name, true) . ';';
 		if ($this->value) {
+			$res .= "echo '=';";
 			$res .= $this->value->print($context);
 		}
 		return $res;

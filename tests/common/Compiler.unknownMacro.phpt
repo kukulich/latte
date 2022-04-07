@@ -17,19 +17,19 @@ $latte->setLoader(new Latte\Loaders\StringLoader);
 Assert::exception(
 	fn() => $latte->compile('{unknown}'),
 	Latte\CompileException::class,
-	'Unexpected tag {unknown}',
+	'Unexpected tag {unknown} (at column 1)',
 );
 
 Assert::exception(
 	fn() => $latte->compile('{class}'),
 	Latte\CompileException::class,
-	'Unexpected tag {class}, did you mean {last}?',
+	'Unexpected tag {class}, did you mean {last}? (at column 1)',
 );
 
 Assert::exception(
 	fn() => $latte->compile('{forech}'),
 	Latte\CompileException::class,
-	'Unexpected tag {forech}, did you mean {foreach}?',
+	'Unexpected tag {forech}, did you mean {foreach}? (at column 1)',
 );
 
 Assert::exception(
@@ -41,13 +41,13 @@ Assert::exception(
 Assert::exception(
 	fn() => $latte->compile('<style>body {color :blue}</style>'),
 	Latte\CompileException::class,
-	'Unexpected tag {color} (in JavaScript or CSS, try to put a space after bracket or use n:syntax=off)',
+	'Unexpected tag {color} (in JavaScript or CSS, try to put a space after bracket or use n:syntax=off) (at column 13)',
 );
 
 Assert::exception(
 	fn() => $latte->compile('<script>if (true) {return}</script>'),
 	Latte\CompileException::class,
-	'Unexpected tag {return} (in JavaScript or CSS, try to put a space after bracket or use n:syntax=off)',
+	'Unexpected tag {return} (in JavaScript or CSS, try to put a space after bracket or use n:syntax=off) (at column 19)',
 );
 
 Assert::exception(

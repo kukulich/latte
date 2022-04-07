@@ -119,17 +119,20 @@ Assert::match(<<<'XX'
 	   |  |  0 => Latte\Compiler\Nodes\Html\ElementNode
 	   |  |  |  customName: null
 	   |  |  |  attributes: Latte\Compiler\Nodes\FragmentNode
-	   |  |  |  |  children: array (2)
-	   |  |  |  |  |  0 => Latte\Compiler\Nodes\Html\AttributeNode
-	   |  |  |  |  |  |  name: 'attr'
-	   |  |  |  |  |  |  text: string
-	   |  |  |  |  |  |  |  ' \n
-	   |  |  |  |  |  |  |   attr=val'
-	   |  |  |  |  |  |  value: null
-	   |  |  |  |  |  |  quote: null
+	   |  |  |  |  children: array (3)
+	   |  |  |  |  |  0 => Latte\Compiler\Nodes\TextNode
+	   |  |  |  |  |  |  content: ' \n'
 	   |  |  |  |  |  |  startLine: 1
 	   |  |  |  |  |  |  endLine: 2
-	   |  |  |  |  |  1 => Latte\Compiler\Nodes\TextNode
+	   |  |  |  |  |  1 => Latte\Compiler\Nodes\Html\AttributeNode
+	   |  |  |  |  |  |  name: 'attr'
+	   |  |  |  |  |  |  value: Latte\Compiler\Nodes\TextNode
+	   |  |  |  |  |  |  |  content: 'val'
+	   |  |  |  |  |  |  |  startLine: 2
+	   |  |  |  |  |  |  |  endLine: 2
+	   |  |  |  |  |  |  startLine: 2
+	   |  |  |  |  |  |  endLine: 2
+	   |  |  |  |  |  2 => Latte\Compiler\Nodes\TextNode
 	   |  |  |  |  |  |  content: '\n'
 	   |  |  |  |  |  |  startLine: 2
 	   |  |  |  |  |  |  endLine: 3
@@ -176,13 +179,13 @@ Assert::match(<<<'XX'
 	   |  |  |  |  children: array (2)
 	   |  |  |  |  |  0 => Latte\Compiler\Nodes\TextNode
 	   |  |  |  |  |  |  content: '\n'
-	   |  |  |  |  |  |  startLine: null
-	   |  |  |  |  |  |  endLine: 1
+	   |  |  |  |  |  |  startLine: 1
+	   |  |  |  |  |  |  endLine: 2
 	   |  |  |  |  |  1 => Latte\Compiler\Nodes\TextNode
 	   |  |  |  |  |  |  content: '...\n'
 	   |  |  |  |  |  |  startLine: 2
 	   |  |  |  |  |  |  endLine: 3
-	   |  |  |  |  startLine: 2
+	   |  |  |  |  startLine: 1
 	   |  |  |  |  endLine: null
 	   |  |  |  nAttributes: array (0)
 	   |  |  |  tagNode: Latte\Compiler\Nodes\AuxiliaryNode

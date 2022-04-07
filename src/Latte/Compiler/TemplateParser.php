@@ -32,6 +32,7 @@ final class TemplateParser
 	public array $blocks = [[]];
 	public int $blockLayer = Template::LayerTop;
 	public int $location = self::LocationHead;
+	public ?Nodes\TextNode $lastIndentation = null;
 
 	/** @var array<string, callable(Tag, self): (Node|\Generator|void)> */
 	private array $tagParsers = [];
@@ -120,9 +121,13 @@ final class TemplateParser
 	{
 		$token = $this->stream->current();
 		return match ($token->type) {
-			LegacyToken::TEXT => $this->parseText(),
-			LegacyToken::COMMENT => $this->parseLatteComment(),
-			LegacyToken::MACRO_TAG => $this->parseLatteStatement(),
+			Token::Text => $this->parseText(),
+			Token::Indentation => $this->parseIndentation(),
+			Token::Newline => $this->parseNewline(),
+			Token::Latte_CommentOpen => $this->parseLatteComment(),
+			Token::Latte_TagOpen => $this->stream->peek(1)->is(Token::Slash)
+				? null // TODO: error uvnitr HTML?
+				: $this->parseLatteStatement(),
 			default => null,
 		};
 	}
@@ -130,41 +135,67 @@ final class TemplateParser
 
 	private function parseText(): Nodes\TextNode
 	{
-		$token = $this->stream->consume(LegacyToken::TEXT);
+		$token = $this->stream->consume(Token::Text);
 		if ($this->location === self::LocationHead && trim($token->text) !== '') {
 			$this->location = self::LocationText;
 		}
+		$this->lastIndentation = null;
 		return new Nodes\TextNode($token->text, $token->line);
 	}
 
 
-	private function parseLatteComment(): Node
+	private function parseIndentation(): Nodes\TextNode
 	{
-		$token = $this->stream->consume(LegacyToken::COMMENT);
-		if ($token->indentation === null && $token->newline) {
-			return new Nodes\TextNode("\n", $token->line);
+		$token = $this->stream->consume(Token::Indentation);
+		return $this->lastIndentation = new Nodes\TextNode($token->text, $token->line);
+	}
+
+
+	private function parseNewline(): Nodes\AreaNode
+	{
+		$token = $this->stream->consume(Token::Newline);
+		if ($this->lastIndentation) { // drop indentation & newline
+			$this->lastIndentation->content = '';
+			$this->lastIndentation = null;
+			return new Nodes\NopNode;
+		} else {
+			return new Nodes\TextNode($token->text, $token->line);
 		}
+	}
+
+
+	private function parseLatteComment(): Nodes\NopNode
+	{
+		if (str_ends_with($this->stream->peek(-1)?->text ?? "\n", "\n")) {
+			$this->lastIndentation ??= new Nodes\TextNode('');
+		}
+		$this->stream->consume(Token::Latte_CommentOpen);
+		$this->stream->consume(Token::Text);
+		$this->stream->consume(Token::Latte_CommentClose);
 		return new Nodes\NopNode;
 	}
 
 
 	private function parseLatteStatement(): ?Node
 	{
-		$token = $this->stream->current();
-		if ($token->closing
-			|| (isset($this->tag->data->filters) && in_array($token->name, $this->tag->data->filters, true))
+		if (isset($this->tag->data->filters)
+			&& in_array($this->stream->peek(1)?->text, $this->tag->data->filters, true)
 		) {
 			return null; // go back to previous parseLatteStatement()
 		}
 
-		$token = $endToken = $this->stream->consume(LegacyToken::MACRO_TAG);
-		$startTag = $this->pushTag($this->createTag($token));
+		$token = $this->stream->current();
+		$startTag = $this->pushTag($this->parseLatteTag());
 
-		$parser = $this->getTagParser($startTag->name, $token->line);
+		$parser = $this->getTagParser($startTag->name, $token->line, $token->column);
 		$res = $parser($startTag, $this);
 		if ($res instanceof \Generator) {
 			if (!$res->valid() && !$startTag->void) {
 				throw new \LogicException("Incorrect behavior of {{$startTag->name}} parser, yield call is expected (on line $startTag->startLine)");
+			}
+
+			if ($startTag->outputMode === $startTag::OutputKeepIndentation) {
+				$this->lastIndentation = null;
 			}
 
 			if ($startTag->void) {
@@ -174,20 +205,20 @@ final class TemplateParser
 					$startTag->data->filters = $res->current() ?: null;
 					$content = $this->parseFragment($this->lastResolver);
 
-					if ($startTag->outputMode === $startTag::OutputKeepIndentation && $token->newline) {
-						array_unshift($content->children, new Nodes\TextNode("\n", $startTag->startLine));
-					}
-
-					$endToken = $this->stream->tryConsume(LegacyToken::MACRO_TAG);
-					if (!$endToken) {
-						$this->checkEndTag($startTag, null);
+					if (!$this->stream->is(Token::Latte_TagOpen)) {
+						$this->checkEndTag($startTag, $endTag = null);
 						$res->send([$content, null]);
 						break;
 					}
 
-					$tag = $this->createTag($endToken);
+					$tag = $this->parseLatteTag();
+
+					if ($startTag->outputMode === $startTag::OutputKeepIndentation) {
+						$this->lastIndentation = null;
+					}
+
 					if ($tag->closing) {
-						$this->checkEndTag($startTag, $tag);
+						$this->checkEndTag($startTag, $endTag = $tag);
 						$res->send([$content, $tag]);
 						break;
 					} else {
@@ -209,53 +240,50 @@ final class TemplateParser
 
 		} else {
 			$node = $res;
+			if ($startTag->outputMode === $startTag::OutputKeepIndentation) {
+				$this->lastIndentation = null;
+			}
 		}
 
 		if (!$node instanceof Node) {
 			throw new \LogicException("Incorrect behavior of {{$startTag->name}} parser, unexpected returned value (on line $startTag->startLine)");
 		}
 
-		$outputMode = $node instanceof Nodes\StatementNode ? $startTag->outputMode : null;
-		if ($outputMode !== $startTag::OutputNone && $this->location === self::LocationHead) {
+		if ($this->location === self::LocationHead && $startTag->outputMode !== $startTag::OutputNone) {
 			$this->location = self::LocationText;
 		}
 
 		$this->popTag();
 
-		$node->startLine = $token->line;
-		$node->endLine = ($endToken ?? $token)->line;
-		$replaced = $outputMode === $startTag::OutputKeepIndentation || $outputMode === null;
-		$res = new FragmentNode;
-		if ($token->indentation && ($replaced || !$token->newline)) {
-			$res->append(new Nodes\TextNode($token->indentation, $token->line));
-		}
-
-		$res->append($node);
-
-		if ($endToken?->newline && ($replaced || $endToken?->indentation === null)) {
-			$res->append(new Nodes\TextNode("\n", $endToken->line));
-		}
-
-		return $res;
+		$node->startLine = $startTag->startLine;
+		$node->endLine = ($endTag ?? $startTag)->endLine;
+		return $node;
 	}
 
 
-	private function createTag(LegacyToken $token): Tag
+	private function parseLatteTag(): Tag
 	{
+		$stream = $this->stream;
+		if (str_ends_with($stream->peek(-1)?->text ?? "\n", "\n")) {
+			$this->lastIndentation ??= new Nodes\TextNode('');
+		}
+
+		$openToken = $stream->consume(Token::Latte_TagOpen);
 		return new Tag(
-			startLine: $token->line,
-			closing: $token->closing,
-			name: $token->name,
-			args: $token->value,
-			void: $token->empty,
+			startLine: $openToken->line,
+			closing: $closing = (bool) $stream->tryConsume(Token::Slash),
+			name: $stream->tryConsume(Token::Latte_Name)?->text ?? ($closing ? '' : '='),
+			args: trim($stream->tryConsume(Token::Latte_Args)?->text ?? ''),
+			void: (bool) $stream->tryConsume(Token::Slash),
 			location: $this->location,
 			htmlElement: $this->html->getElement(),
+			endLine: $stream->consume(Token::Latte_TagClose)->line,
 		);
 	}
 
 
 	/** @return callable(Tag, self): (Node|\Generator|void) */
-	private function getTagParser(string $name, int $line): callable
+	private function getTagParser(string $name, int $line, int $column): callable
 	{
 		if (!isset($this->tagParsers[$name])) {
 			$hint = ($t = Helpers::getSuggestion(array_keys($this->tagParsers), $name))
@@ -266,7 +294,7 @@ final class TemplateParser
 			) {
 				$hint .= ' (in JavaScript or CSS, try to put a space after bracket or use n:syntax=off)';
 			}
-			throw new CompileException("Unexpected tag {{$name}}$hint", $line);
+			throw new CompileException("Unexpected tag {{$name}}$hint", $line, $column);
 		} elseif (!$this->isTagAllowed($name)) {
 			throw new SecurityViolationException("Tag {{$name}} is not allowed.");
 		}

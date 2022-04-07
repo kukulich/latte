@@ -73,7 +73,7 @@ Assert::exception(
 Assert::exception(
 	fn() => $latte->compile('<html>{ifcontent}'),
 	Latte\CompileException::class,
-	'Unexpected tag {ifcontent}',
+	'Unexpected tag {ifcontent} (at column 7)',
 );
 
 

@@ -17,7 +17,7 @@ $latte->setLoader(new Latte\Loaders\StringLoader);
 Assert::exception(
 	fn() => $latte->compile('{case}'),
 	Latte\CompileException::class,
-	'Unexpected tag {case}',
+	'Unexpected tag {case} (at column 1)',
 );
 
 Assert::exception(

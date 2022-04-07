@@ -102,9 +102,9 @@ class ElementNode extends AreaNode
 		}
 
 		foreach ($this->attributes?->children ?? [] as $attr) {
-			if ($attr instanceof AttributeNode) {
-				$this->setAttributeContext($context, $attr);
-			}
+			$attr instanceof AttributeNode
+				? $this->setAttributeContext($context, $attr)
+				: $context->setEscapingContext(Context::HtmlTag);
 			$res .= $attr->print($context);
 		}
 
@@ -149,13 +149,10 @@ class ElementNode extends AreaNode
 		}
 
 		if ($escapingContext) {
-			$flag = $attr->quote ? null : Context::HtmlAttributeUnquoted;
+			$context->setEscapingContext($escapingContext, Context::HtmlAttributeUnquoted);
 		} else {
-			$escapingContext = $attr->quote ? Context::HtmlAttribute : Context::HtmlTag;
-			$flag = null;
+			$context->setEscapingContext(Context::HtmlTag);
 		}
-
-		$context->setEscapingContext($escapingContext, $flag);
 	}
 
 
@@ -175,6 +172,7 @@ class ElementNode extends AreaNode
 
 		return match (true) {
 			$node instanceof Nodes\TextNode => $node->content,
+			$node instanceof QuotedValue => self::nodeToString($node->value),
 			default => null,
 		};
 	}

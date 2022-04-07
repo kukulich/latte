@@ -47,6 +47,7 @@ final class Tag
 		public ?self $parent = null,
 		public /*readonly*/ ?string $prefix = null,
 		public /*readonly*/ ?int $startLine = null,
+		public /*readonly*/ ?int $endLine = null,
 		public /*readonly*/ ?\stdClass $data = null,
 	) {
 		$this->setArgs($args);

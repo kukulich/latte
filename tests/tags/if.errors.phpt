@@ -25,29 +25,29 @@ Assert::exception(
 Assert::exception(
 	fn() => $latte->compile('{else}'),
 	Latte\CompileException::class,
-	'Unexpected tag {else}',
+	'Unexpected tag {else} (at column 1)',
 );
 
 Assert::exception(
 	fn() => $latte->compile('{if 1}{else}{else}{/if}'),
 	Latte\CompileException::class,
-	'Unexpected tag {else}',
+	'Unexpected tag {else} (at column 13)',
 );
 
 Assert::exception(
 	fn() => $latte->compile('{elseif a}'),
 	Latte\CompileException::class,
-	'Unexpected tag {elseif}',
+	'Unexpected tag {elseif} (at column 1)',
 );
 
 Assert::exception(
 	fn() => $latte->compile('{if 1}{else}{elseif a}{/if}'),
 	Latte\CompileException::class,
-	'Unexpected tag {elseif}',
+	'Unexpected tag {elseif} (at column 13)',
 );
 
 Assert::exception(
 	fn() => $latte->compile('{if}{elseif a}{/if 1}'),
 	Latte\CompileException::class,
-	'Unexpected tag {elseif}',
+	'Unexpected tag {elseif} (at column 5)',
 );
