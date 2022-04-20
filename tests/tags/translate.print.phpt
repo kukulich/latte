@@ -19,3 +19,21 @@ Assert::contains(
 	'echo LR\Filters::escapeHtmlText(($this->filters->filter)(($this->filters->translate)(\'var\'))) /*',
 	$latte->compile('{_var|filter}'),
 );
+
+
+// traversing
+Assert::match(<<<'XX'
+	Template:
+		Fragment:
+		Fragment:
+			Print:
+				Variable:
+					name: var
+				Modifier:
+					Filter:
+						Identifier:
+							name: translate
+					Filter:
+						Identifier:
+							name: trim
+	XX, exportTraversing('{_$var|trim}'));
